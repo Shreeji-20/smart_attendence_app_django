@@ -1,0 +1,153 @@
+{% extends 'attendance/base.html' %}
+{% load static %}
+
+{% block page_title %}Attendance Calendar{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Attendance Calendar</h5>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="monthView">Month</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="weekView">Week</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="dayView">Day</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="calendar" style="min-height: 600px;"></div>
+            </div>
+    </div>
+    </div>
+</div>
+
+<!-- Event Details Modal -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Attendance Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Date:</strong> <span id="eventDate"></span></p>
+                        <p><strong>Status:</strong> <span id="eventStatus"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Check-in:</strong> <span id="eventCheckIn"></span></p>
+                        <p><strong>Check-out:</strong> <span id="eventCheckOut"></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- FullCalendar CSS -->
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+<!-- FullCalendar JS -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarEl = document.getElementById('calendar');
+        const eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
+        
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: ''
+            },
+            events: {{ calendar_events|safe }},
+            eventClick: function(info) {
+                // Update modal content
+                document.getElementById('eventDate').textContent = info.event.start.toLocaleDateString();
+                document.getElementById('eventStatus').textContent = info.event.extendedProps.status;
+                document.getElementById('eventCheckIn').textContent = info.event.extendedProps.check_in;
+                document.getElementById('eventCheckOut').textContent = info.event.extendedProps.check_out;
+                
+                // Show modal
+                eventModal.show();
+            },
+            eventDidMount: function(info) {
+                // Add tooltip
+                info.el.title = `Status: ${info.event.extendedProps.status}\nCheck-in: ${info.event.extendedProps.check_in}\nCheck-out: ${info.event.extendedProps.check_out}`;
+            }
+        });
+        
+        calendar.render();
+        
+        // View buttons
+        document.getElementById('monthView').addEventListener('click', function() {
+            calendar.changeView('dayGridMonth');
+            updateActiveButton(this);
+        });
+        
+        document.getElementById('weekView').addEventListener('click', function() {
+            calendar.changeView('timeGridWeek');
+            updateActiveButton(this);
+        });
+        
+        document.getElementById('dayView').addEventListener('click', function() {
+            calendar.changeView('timeGridDay');
+            updateActiveButton(this);
+        });
+        
+        function updateActiveButton(activeButton) {
+            document.querySelectorAll('.btn-group .btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            activeButton.classList.add('active');
+        }
+        
+        // Set month view as active by default
+        document.getElementById('monthView').classList.add('active');
+    });
+</script>
+
+<style>
+    .fc {
+        background-color: white;
+    }
+    .fc .fc-toolbar-title {
+        font-size: 1.25rem;
+        font-weight: 500;
+    }
+    .fc .fc-button {
+        background-color: #4e73df;
+        border-color: #4e73df;
+    }
+    .fc .fc-button:hover {
+        background-color: #2e59d9;
+        border-color: #2e59d9;
+    }
+    .fc .fc-button-primary:not(:disabled).fc-button-active {
+        background-color: #2e59d9;
+        border-color: #2e59d9;
+    }
+    .fc-event {
+        cursor: pointer;
+        padding: 2px 4px;
+    }
+    .fc-event:hover {
+        opacity: 0.9;
+    }
+    .btn-group .btn {
+        padding: 0.375rem 0.75rem;
+    }
+    .btn-group .btn.active {
+        background-color: #4e73df;
+        color: white;
+    }
+</style>
+{% endblock %}

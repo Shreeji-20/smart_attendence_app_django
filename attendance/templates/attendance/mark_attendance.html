@@ -1,0 +1,191 @@
+{% extends 'attendance/base.html' %}
+{% load static %}
+
+{% block page_title %}Mark Attendance{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Mark Attendance</h5>
+            </div>
+            <div class="card-body">
+                {% if not has_face_data %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    You need to set up face recognition before marking attendance.
+                    <a href="{% url 'train_face_recognition' %}" class="btn btn-warning btn-sm ms-2">
+                        <i class="fas fa-user-plus"></i> Set Up Face Recognition
+                    </a>
+                </div>
+                {% endif %}
+
+                <div class="text-center mb-4">
+                    <video id="video" width="640" height="480" autoplay></video>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                </div>
+
+                <div class="text-center">
+                    {% if can_check_in %}
+                    <button id="checkInBtn" class="btn btn-primary me-2" {% if not has_face_data %}disabled{% endif %}>
+                        <i class="fas fa-sign-in-alt"></i> Check In
+                    </button>
+                    {% endif %}
+                    
+                    {% if can_check_out %}
+                    <button id="checkOutBtn" class="btn btn-danger" {% if not has_face_data %}disabled{% endif %}>
+                        <i class="fas fa-sign-out-alt"></i> Check Out
+                    </button>
+                    {% endif %}
+                </div>
+
+                <div id="message" class="mt-3"></div>
+
+                {% if today_attendance %}
+                <div class="mt-4">
+                    <h6>Today's Attendance:</h6>
+                    <table class="table">
+                        <tr>
+                            <th>Check In Time</th>
+                            <td>{{ today_attendance.check_in_time|time:"H:i:s" }}</td>
+                        </tr>
+                        {% if today_attendance.check_out_time %}
+                        <tr>
+                            <th>Check Out Time</th>
+                            <td>{{ today_attendance.check_out_time|time:"H:i:s" }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let stream = null;
+
+// Start webcam
+async function startWebcam() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const video = document.getElementById('video');
+        video.srcObject = stream;
+    } catch (err) {
+        console.error('Error accessing webcam:', err);
+        showMessage('Error accessing webcam. Please ensure camera permissions are granted.', 'danger');
+    }
+}
+
+// Capture image
+function captureImage() {
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    return canvas.toDataURL('image/jpeg');
+}
+
+// Mark attendance
+async function markAttendance(action) {
+    try {
+        const imageData = captureImage();
+        const response = await fetch('{% url "mark_attendance" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: `image_data=${encodeURIComponent(imageData)}&action=${action}`
+        });
+
+        const data = await response.json();
+        showMessage(data.message, data.success ? 'success' : 'danger');
+
+        if (data.success) {
+            // Reload page after successful attendance marking
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        }
+    } catch (err) {
+        console.error('Error marking attendance:', err);
+        showMessage('Error marking attendance. Please try again.', 'danger');
+    }
+}
+
+// Show message
+function showMessage(message, type) {
+    const messageDiv = document.getElementById('message');
+    messageDiv.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    startWebcam();
+
+    const checkInBtn = document.getElementById('checkInBtn');
+    const checkOutBtn = document.getElementById('checkOutBtn');
+
+    if (checkInBtn) {
+        checkInBtn.addEventListener('click', () => markAttendance('check_in'));
+    }
+    if (checkOutBtn) {
+        checkOutBtn.addEventListener('click', () => markAttendance('check_out'));
+    }
+});
+
+// Cleanup when leaving the page
+window.addEventListener('beforeunload', () => {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+});
+</script>
+{% endblock %}
+
+<style>
+.card {
+    border-radius: 0.35rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+}
+
+.alert {
+    border-radius: 0.35rem;
+    margin-bottom: 1.5rem;
+}
+
+.border-left-primary {
+    border-left: 4px solid #4e73df !important;
+}
+
+.border-left-success {
+    border-left: 4px solid #1cc88a !important;
+}
+
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+
+.text-gray-800 {
+    color: #5a5c69 !important;
+        }
+    </style>

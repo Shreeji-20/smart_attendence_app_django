@@ -1,0 +1,136 @@
+{% extends 'attendance/base.html' %}
+{% load static %}
+
+{% block page_title %}Train Face Recognition{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Train Face Recognition</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    Please follow these steps to train face recognition:
+                    <ol class="mb-0">
+                        <li>Position your face in the center of the camera</li>
+                        <li>Ensure good lighting and a clear view of your face</li>
+                        <li>Click "Capture" when ready</li>
+                        <li>Click "Train" to save your face data</li>
+                    </ol>
+                </div>
+
+                <div class="text-center mb-4">
+                    <video id="video" width="640" height="480" autoplay></video>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                </div>
+
+                <div class="text-center">
+                    <button id="captureBtn" class="btn btn-primary me-2">
+                        <i class="fas fa-camera"></i> Capture
+                    </button>
+                    <button id="trainBtn" class="btn btn-success" disabled>
+                        <i class="fas fa-save"></i> Train
+                    </button>
+                </div>
+
+                <div id="message" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let stream = null;
+let capturedImage = null;
+
+// Start webcam
+async function startWebcam() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const video = document.getElementById('video');
+        video.srcObject = stream;
+    } catch (err) {
+        console.error('Error accessing webcam:', err);
+        showMessage('Error accessing webcam. Please ensure camera permissions are granted.', 'danger');
+    }
+}
+
+// Capture image
+function captureImage() {
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    capturedImage = canvas.toDataURL('image/jpeg');
+    document.getElementById('trainBtn').disabled = false;
+    showMessage('Image captured successfully! Click Train to save.', 'success');
+}
+
+// Train face recognition
+async function trainFaceRecognition() {
+    if (!capturedImage) {
+        showMessage('Please capture an image first.', 'warning');
+        return;
+    }
+
+    try {
+        const response = await fetch('{% url "train_face_recognition" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: `image_data=${encodeURIComponent(capturedImage)}`
+        });
+
+        const data = await response.json();
+        showMessage(data.message, data.success ? 'success' : 'danger');
+
+        if (data.success) {
+            // Redirect to home page after successful training
+            setTimeout(() => {
+                window.location.href = '{% url "home" %}';
+            }, 2000);
+        }
+    } catch (err) {
+        console.error('Error training face recognition:', err);
+        showMessage('Error training face recognition. Please try again.', 'danger');
+    }
+}
+
+// Show message
+function showMessage(message, type) {
+    const messageDiv = document.getElementById('message');
+    messageDiv.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    startWebcam();
+
+    document.getElementById('captureBtn').addEventListener('click', captureImage);
+    document.getElementById('trainBtn').addEventListener('click', trainFaceRecognition);
+});
+
+// Cleanup when leaving the page
+window.addEventListener('beforeunload', () => {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+});
+</script>
+{% endblock %} 

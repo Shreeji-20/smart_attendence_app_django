@@ -1,0 +1,131 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<div class="min-h-screen flex bg-gray-100">
+    <!-- Sidebar -->
+    <div class="bg-gray-900 text-white w-64 py-6 flex flex-col">
+        <div class="px-6 mb-8">
+            <h2 class="text-2xl font-bold">Admin Panel</h2>
+        </div>
+        <nav class="flex-1">
+            <a href="{% url 'admin_dashboard' %}" class="block px-6 py-2 hover:bg-gray-800">Dashboard</a>
+            <a href="{% url 'admin_users' %}" class="block px-6 py-2 hover:bg-gray-800">Users</a>
+            <a href="{% url 'admin_attendance' %}" class="block px-6 py-2 hover:bg-gray-800">Attendance</a>
+            <a href="{% url 'admin_leave_management' %}" class="block px-6 py-2 hover:bg-gray-800">Leave Management</a>
+            <a href="{% url 'admin_settings' %}" class="block px-6 py-2 hover:bg-gray-800 bg-gray-800 border-l-4 border-blue-500">Settings</a>
+        </nav>
+        <div class="px-6 py-4">
+            <a href="{% url 'admin_logout' %}" class="block text-gray-400 hover:text-white">Logout</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 overflow-x-hidden overflow-y-auto">
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+                <h1 class="text-2xl font-semibold text-gray-900">System Settings</h1>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <div class="bg-white shadow-sm rounded-lg">
+                <div class="p-6">
+                    <form method="POST" class="space-y-6">
+                        {% csrf_token %}
+                        
+                        <!-- Working Hours -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Working Hours</h3>
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label for="working_hours_start" class="block text-sm font-medium text-gray-700">Start Time</label>
+                                    <input type="time" name="working_hours_start" id="working_hours_start" 
+                                           value="{{ settings.working_hours_start|time:'H:i' }}"
+                                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                </div>
+                                <div>
+                                    <label for="working_hours_end" class="block text-sm font-medium text-gray-700">End Time</label>
+                                    <input type="time" name="working_hours_end" id="working_hours_end" 
+                                           value="{{ settings.working_hours_end|time:'H:i' }}"
+                                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Attendance Rules -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Attendance Rules</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-start">
+                                    <div class="flex items-center h-5">
+                                        <input type="checkbox" name="allow_late_checkin" id="allow_late_checkin" 
+                                               {% if settings.allow_late_checkin %}checked{% endif %}
+                                               class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded">
+                                    </div>
+                                    <div class="ml-3">
+                                        <label for="allow_late_checkin" class="text-sm font-medium text-gray-700">Allow Late Check-in</label>
+                                        <p class="text-sm text-gray-500">Students can check in after working hours start time</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="late_threshold" class="block text-sm font-medium text-gray-700">Late Check-in Threshold (minutes)</label>
+                                    <input type="number" name="late_threshold" id="late_threshold" min="0" max="120" 
+                                           value="{{ settings.late_threshold }}"
+                                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                           placeholder="15">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notifications -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Notifications</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-start">
+                                    <div class="flex items-center h-5">
+                                        <input type="checkbox" name="send_notifications" id="send_notifications" 
+                                               {% if settings.send_notifications %}checked{% endif %}
+                                               class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded">
+                                    </div>
+                                    <div class="ml-3">
+                                        <label for="send_notifications" class="text-sm font-medium text-gray-700">Enable Email Notifications</label>
+                                        <p class="text-sm text-gray-500">Send email notifications for attendance and leave updates</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Leave Settings -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Leave Settings</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="max_leaves" class="block text-sm font-medium text-gray-700">Maximum Leaves per Month</label>
+                                    <input type="number" name="max_leaves" id="max_leaves" min="0" max="31" 
+                                           value="{{ settings.max_leaves }}"
+                                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                           placeholder="2">
+                                </div>
+                                <div>
+                                    <label for="leave_notice_days" class="block text-sm font-medium text-gray-700">Minimum Notice Days for Leave</label>
+                                    <input type="number" name="leave_notice_days" id="leave_notice_days" min="0" max="30" 
+                                           value="{{ settings.leave_notice_days }}"
+                                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                           placeholder="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="pt-4">
+                            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Save Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %} 

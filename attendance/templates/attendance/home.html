@@ -1,0 +1,496 @@
+<!-- attendance/templates/attendance/home.html -->
+{% extends 'attendance/base.html' %}
+{% load static %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Welcome Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h4 class="card-title mb-2">Welcome, {{ user.username }}!</h4>
+                <p class="card-text text-muted">Here's your attendance overview for today.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-4">
+        <div class="card border-left-primary shadow-sm h-100">
+            <div class="card-body p-4">
+                <h5 class="card-title mb-3">Mark Attendance</h5>
+                <p class="card-text text-muted mb-4">Record your check-in and check-out times.</p>
+                <a href="{% url 'mark_attendance' %}" class="btn btn-primary btn-lg w-100">Mark Attendance</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card border-left-success shadow-sm h-100">
+            <div class="card-body p-4">
+                <h5 class="card-title mb-3">Apply Leave</h5>
+                <p class="card-text text-muted mb-4">Submit a leave request for approval.</p>
+                <a href="{% url 'leave' %}" class="btn btn-success btn-lg w-100">Apply Leave</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card border-left-primary shadow-sm h-100">
+            <div class="card-body p-4">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-2">
+                            Monthly Attendance</div>
+                        <div class="h3 mb-0 font-weight-bold text-gray-800">
+                            {{ monthly_attendance|length }} days
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card border-left-success shadow-sm h-100">
+            <div class="card-body p-4">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-2">
+                            Leave Balance</div>
+                        <div class="h3 mb-0 font-weight-bold text-gray-800">
+                            {{ leave_stats|length }} requests
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-plane fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card border-left-warning shadow-sm h-100">
+            <div class="card-body p-4">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-2">
+                            Late Arrivals (After 8:10 AM)</div>
+                        <div class="h3 mb-0 font-weight-bold text-gray-800">
+                            {{ late_arrivals_count }} times
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row mb-4">
+    <div class="col-xl-6 col-lg-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Monthly Attendance</h6>
+            </div>
+            <div class="card-body p-4">
+                <div style="height: 300px;">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6 col-lg-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Weekly Attendance Pattern</h6>
+            </div>
+            <div class="card-body p-4">
+                <div style="height: 300px;">
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Graphs Row -->
+<div class="row mb-4">
+    <!-- Daily Check-in Times Graph -->
+    <div class="col-xl-6 col-lg-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Daily Check-in/Check-out Times</h6>
+            </div>
+            <div class="card-body p-4">
+                <div style="height: 300px;">
+                    <canvas id="dailyTimesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leave Statistics Graph -->
+    <div class="col-xl-6 col-lg-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Leave Statistics</h6>
+            </div>
+            <div class="card-body p-4">
+                <div style="height: 300px;">
+                    <canvas id="leaveStatsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    .card {
+        border-radius: 0.5rem;
+        transition: transform 0.2s ease-in-out;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    .card-header {
+        border-top-left-radius: 0.5rem !important;
+        border-top-right-radius: 0.5rem !important;
+        background-color: #f8f9fc;
+    }
+    .border-left-primary {
+        border-left: 4px solid #4e73df !important;
+    }
+    .border-left-success {
+        border-left: 4px solid #1cc88a !important;
+    }
+    .border-left-warning {
+        border-left: 4px solid #f6c23e !important;
+    }
+    .btn {
+        border-radius: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+    }
+    .text-xs {
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+    }
+    .chart-area {
+        position: relative;
+        height: 100%;
+    }
+</style>
+
+<script>
+    // Monthly Attendance Chart - Bar Chart with Gradient
+    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    const gradient = monthlyCtx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(78, 205, 196, 0.8)');  // Turquoise
+    gradient.addColorStop(1, 'rgba(78, 205, 196, 0.2)');  // Light Turquoise
+
+    new Chart(monthlyCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ months|safe }},
+            datasets: [{
+                label: 'Attendance Days',
+                data: {{ monthly_attendance|safe }}.map(item => item.total),
+                backgroundColor: gradient,
+                borderColor: '#4ECDC4',
+                borderWidth: 1,
+                borderRadius: 5,
+                hoverBackgroundColor: '#4ECDC4',
+                hoverBorderColor: '#4ECDC4',
+                hoverBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    titleColor: '#2C3E50',
+                    bodyColor: '#2C3E50',
+                    borderColor: '#E0E0E0',
+                    borderWidth: 1,
+                    padding: 10,
+                    callbacks: {
+                        label: function(context) {
+                            return `Days: ${context.raw}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(value) {
+                            return value + ' day' + (value !== 1 ? 's' : '');
+                        }
+                    }
+                }
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
+            }
+        }
+    });
+
+    // Weekly Pattern Chart - Radar Chart
+    const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+    new Chart(weeklyCtx, {
+        type: 'radar',
+        data: {
+            labels: {{ days|safe }},
+            datasets: [{
+                label: 'Attendance',
+                data: {{ weekly_attendance|safe }},
+                backgroundColor: 'rgba(78, 205, 196, 0.2)',  // Turquoise with transparency
+                borderColor: '#4ECDC4',  // Turquoise
+                borderWidth: 2,
+                pointBackgroundColor: '#4ECDC4',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    titleColor: '#2C3E50',
+                    bodyColor: '#2C3E50',
+                    borderColor: '#E0E0E0',
+                    borderWidth: 1,
+                    padding: 10,
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            const total = {{ weekly_attendance|safe }}.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return `Days: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(value) {
+                            return value + ' day' + (value !== 1 ? 's' : '');
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    angleLines: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    pointLabels: {
+                        font: {
+                            size: 12,
+                            weight: 'bold'
+                        }
+                    }
+                }
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
+            }
+        }
+    });
+
+    // Daily Check-in/Check-out Times Chart - Bar Chart with Modern Design
+    const dailyTimesCtx = document.getElementById('dailyTimesChart').getContext('2d');
+    const checkInGradient = dailyTimesCtx.createLinearGradient(0, 0, 0, 300);
+    checkInGradient.addColorStop(0, 'rgba(255, 107, 107, 0.8)');  // Coral Red
+    checkInGradient.addColorStop(1, 'rgba(255, 107, 107, 0.2)');  // Light Coral
+
+    const checkOutGradient = dailyTimesCtx.createLinearGradient(0, 0, 0, 300);
+    checkOutGradient.addColorStop(0, 'rgba(78, 205, 196, 0.8)');  // Turquoise
+    checkOutGradient.addColorStop(1, 'rgba(78, 205, 196, 0.2)');  // Light Turquoise
+
+    new Chart(dailyTimesCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ daily_times|safe|default:'[]' }}.map(item => item.date),
+            datasets: [{
+                label: 'Check-in Time',
+                data: {{ daily_times|safe|default:'[]' }}.map(item => {
+                    if (item.avg_check_in) {
+                        const time = new Date(item.avg_check_in);
+                        return time.getHours() + time.getMinutes() / 60;
+                    }
+                    return null;
+                }),
+                backgroundColor: checkInGradient,
+                borderColor: '#FF6B6B',
+                borderWidth: 1,
+                borderRadius: 5,
+                hoverBackgroundColor: '#FF6B6B',
+                hoverBorderColor: '#FF6B6B',
+                hoverBorderWidth: 2,
+                barPercentage: 0.4
+            },
+            {
+                label: 'Check-out Time',
+                data: {{ daily_times|safe|default:'[]' }}.map(item => {
+                    if (item.avg_check_out) {
+                        const time = new Date(item.avg_check_out);
+                        return time.getHours() + time.getMinutes() / 60;
+                    }
+                    return null;
+                }),
+                backgroundColor: checkOutGradient,
+                borderColor: '#4ECDC4',
+                borderWidth: 1,
+                borderRadius: 5,
+                hoverBackgroundColor: '#4ECDC4',
+                hoverBorderColor: '#4ECDC4',
+                hoverBorderWidth: 2,
+                barPercentage: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    titleColor: '#2C3E50',
+                    bodyColor: '#2C3E50',
+                    borderColor: '#E0E0E0',
+                    borderWidth: 1,
+                    padding: 10,
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            if (value === null) return `${context.dataset.label}: Not recorded`;
+                            const hours = Math.floor(value);
+                            const minutes = Math.round((value - hours) * 60);
+                            return `${context.dataset.label}: ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    min: 7.5,  // 7:30 AM
+                    max: 14.5, // 2:30 PM
+                    ticks: {
+                        callback: function(value) {
+                            const hours = Math.floor(value);
+                            const minutes = Math.round((value - hours) * 60);
+                            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
+            }
+        }
+    });
+
+    // Leave Statistics Chart - Pie Chart
+    const leaveStatsCtx = document.getElementById('leaveStatsChart').getContext('2d');
+    new Chart(leaveStatsCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ leave_stats|safe }}.map(item => item.leave_type),
+            datasets: [{
+                data: {{ leave_stats|safe }}.map(item => item.count),
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 206, 86, 0.8)',
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(153, 102, 255, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        padding: 20
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.label}: ${context.raw} requests`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

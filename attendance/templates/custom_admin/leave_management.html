@@ -1,0 +1,198 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<div class="min-h-screen flex bg-gray-100">
+    <!-- Sidebar -->
+    <div class="bg-gray-900 text-white w-64 py-6 flex flex-col">
+        <div class="px-6 mb-8">
+            <h2 class="text-2xl font-bold">Admin Panel</h2>
+        </div>
+        <nav class="flex-1">
+            <a href="{% url 'admin_dashboard' %}" class="block px-6 py-2 hover:bg-gray-800">Dashboard</a>
+            <a href="{% url 'admin_users' %}" class="block px-6 py-2 hover:bg-gray-800">Users</a>
+            <a href="{% url 'admin_attendance' %}" class="block px-6 py-2 hover:bg-gray-800">Attendance</a>
+            <a href="{% url 'admin_leave_management' %}" class="block px-6 py-2 hover:bg-gray-800 bg-gray-800 border-l-4 border-blue-500">Leave Management</a>
+            <a href="{% url 'admin_settings' %}" class="block px-6 py-2 hover:bg-gray-800">Settings</a>
+        </nav>
+        <div class="px-6 py-4">
+            <a href="{% url 'admin_logout' %}" class="block text-gray-400 hover:text-white">Logout</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 overflow-x-hidden overflow-y-auto">
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+                <h1 class="text-2xl font-semibold text-gray-900">Leave Management</h1>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <div class="bg-white shadow-sm rounded-lg">
+                <div class="p-6">
+                    <!-- Filters -->
+                    <div class="flex space-x-4 mb-6">
+                        <div class="w-64">
+                            <select class="form-select w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                        </div>
+                        <div class="w-64">
+                            <select class="form-select w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" id="leaveTypeFilter">
+                                <option value="">All Leave Types</option>
+                                {% for leave_type in leave_types %}
+                                <option value="{{ leave_type.0 }}">{{ leave_type.1 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="flex-1">
+                            <input type="text" id="searchInput" class="form-input w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Search...">
+                        </div>
+                    </div>
+
+                    <!-- Leave Requests Table -->
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leave Type</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for leave in leave_requests %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ leave.user.username }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ leave.user.profile.department }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ leave.leave_type }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ leave.start_date }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ leave.end_date }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ leave.duration }} days</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <button type="button" class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" data-toggle="tooltip" data-placement="top" title="{{ leave.reason }}">
+                                            View Reason
+                                        </button>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            {% if leave.status == 'Pending' %}bg-yellow-100 text-yellow-800
+                                            {% elif leave.status == 'Approved' %}bg-green-100 text-green-800
+                                            {% else %}bg-red-100 text-red-800{% endif %}">
+                                            {{ leave.status }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {% if leave.status == 'Pending' %}
+                                        <div class="flex space-x-2">
+                                            <form method="post" action="{% url 'handle_leave_request' leave.id %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="approve">
+                                                <button type="submit" class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                    </svg>
+                                                    Approve
+                                                </button>
+                                            </form>
+                                            <form method="post" action="{% url 'handle_leave_request' leave.id %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="reject">
+                                                <button type="submit" class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                    </svg>
+                                                    Reject
+                                                </button>
+                                            </form>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="9" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No leave requests found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if leave_requests.has_other_pages %}
+                    <nav class="flex items-center justify-center mt-6" aria-label="Pagination">
+                        <ul class="flex space-x-2">
+                            {% if leave_requests.has_previous %}
+                            <li>
+                                <a href="?page={{ leave_requests.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    Previous
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            {% for i in leave_requests.paginator.page_range %}
+                            <li>
+                                <a href="?page={{ i }}" class="relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md {% if leave_requests.number == i %}text-white bg-blue-600 hover:bg-blue-700{% else %}text-gray-700 bg-white hover:bg-gray-50{% endif %}">
+                                    {{ i }}
+                                </a>
+                            </li>
+                            {% endfor %}
+
+                            {% if leave_requests.has_next %}
+                            <li>
+                                <a href="?page={{ leave_requests.next_page_number }}" class="relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    Next
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Initialize tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+
+        // Search functionality
+        $("#searchInput").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("table tbody tr").filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+
+        // Filter functionality
+        $("#statusFilter, #leaveTypeFilter").on("change", function() {
+            var status = $("#statusFilter").val().toLowerCase();
+            var leaveType = $("#leaveTypeFilter").val().toLowerCase();
+
+            $("table tbody tr").filter(function() {
+                var rowStatus = $(this).find("td:eq(7)").text().toLowerCase();
+                var rowLeaveType = $(this).find("td:eq(2)").text().toLowerCase();
+                
+                var statusMatch = status === "" || rowStatus.indexOf(status) > -1;
+                var leaveTypeMatch = leaveType === "" || rowLeaveType.indexOf(leaveType) > -1;
+
+                $(this).toggle(statusMatch && leaveTypeMatch);
+            });
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %} 

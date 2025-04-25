@@ -1,0 +1,181 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<div class="min-h-screen flex bg-gray-100">
+    <!-- Sidebar -->
+    <div class="bg-gray-900 text-white w-64 py-6 flex flex-col">
+        <div class="px-6 mb-8">
+            <h2 class="text-2xl font-bold">Admin Panel</h2>
+        </div>
+        <nav class="flex-1">
+            <a href="{% url 'admin_dashboard' %}" class="block px-6 py-2 hover:bg-gray-800">Dashboard</a>
+            <a href="{% url 'admin_users' %}" class="block px-6 py-2 hover:bg-gray-800">Users</a>
+            <a href="{% url 'admin_attendance' %}" class="block px-6 py-2 hover:bg-gray-800 bg-gray-800 border-l-4 border-blue-500">Attendance</a>
+            <a href="{% url 'admin_leave_management' %}" class="block px-6 py-2 hover:bg-gray-800">Leave Management</a>
+            <a href="{% url 'admin_settings' %}" class="block px-6 py-2 hover:bg-gray-800">Settings</a>
+        </nav>
+        <div class="px-6 py-4">
+            <a href="{% url 'admin_logout' %}" class="block text-gray-400 hover:text-white">Logout</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 overflow-x-hidden overflow-y-auto">
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+                <h1 class="text-2xl font-semibold text-gray-900">Attendance Records</h1>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <!-- Filters -->
+            <div class="bg-white shadow-sm rounded-lg mb-6 p-4">
+                <form method="GET" class="flex flex-wrap gap-4 items-end">
+                    <div>
+                        <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                        <input type="date" name="date" id="date" value="{{ date_filter }}"
+                               class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                        <select name="department" id="department"
+                                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                            <option value="">All Departments</option>
+                            {% for code, name in departments %}
+                            <option value="{{ code }}" {% if department_filter == code %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select name="status" id="status"
+                                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                            <option value="">All Status</option>
+                            <option value="Present" {% if status_filter == 'Present' %}selected{% endif %}>Present</option>
+                            <option value="Late" {% if status_filter == 'Late' %}selected{% endif %}>Late</option>
+                            <option value="Absent" {% if status_filter == 'Absent' %}selected{% endif %}>Absent</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                            Apply Filters
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Attendance Records Table -->
+            <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enrollment Number</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check In</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check Out</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for record in attendance_records %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ record.user.profile.enrollment_number }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ record.user.profile.get_department_display }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ record.date|date:"M d, Y" }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ record.check_in_time|time:"H:i" }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {% if record.check_out_time %}
+                                {{ record.check_out_time|time:"H:i" }}
+                                {% else %}
+                                <span class="text-yellow-600">In Progress</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if record.status == 'Present' %}bg-green-100 text-green-800
+                                    {% elif record.status == 'Late' %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ record.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if attendance_records.has_other_pages %}
+            <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-4">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    {% if attendance_records.has_previous %}
+                    <a href="?page={{ attendance_records.previous_page_number }}&date={{ date_filter }}&department={{ department_filter }}&status={{ status_filter }}"
+                       class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Previous
+                    </a>
+                    {% endif %}
+                    {% if attendance_records.has_next %}
+                    <a href="?page={{ attendance_records.next_page_number }}&date={{ date_filter }}&department={{ department_filter }}&status={{ status_filter }}"
+                       class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Next
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Showing page {{ attendance_records.number }} of {{ attendance_records.paginator.num_pages }}
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                            {% if attendance_records.has_previous %}
+                            <a href="?page={{ attendance_records.previous_page_number }}&date={{ date_filter }}&department={{ department_filter }}&status={{ status_filter }}"
+                               class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                Previous
+                            </a>
+                            {% endif %}
+                            
+                            {% for i in attendance_records.paginator.page_range %}
+                                {% if attendance_records.number == i %}
+                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+                                    {{ i }}
+                                </span>
+                                {% else %}
+                                <a href="?page={{ i }}&date={{ date_filter }}&department={{ department_filter }}&status={{ status_filter }}"
+                                   class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    {{ i }}
+                                </a>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if attendance_records.has_next %}
+                            <a href="?page={{ attendance_records.next_page_number }}&date={{ date_filter }}&department={{ department_filter }}&status={{ status_filter }}"
+                               class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                Next
+                            </a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+</div>
+{% endblock %} 

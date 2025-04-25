@@ -1,0 +1,671 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<div class="min-h-screen flex bg-gray-100">
+    <!-- Sidebar -->
+    <div class="bg-gray-900 text-white w-64 py-6 flex flex-col">
+        <div class="px-6 mb-8">
+            <h2 class="text-2xl font-bold">Admin Panel</h2>
+        </div>
+        <nav class="flex-1">
+            <a href="{% url 'admin_dashboard' %}" class="block px-6 py-2 hover:bg-gray-800 bg-gray-800 border-l-4 border-blue-500">Dashboard</a>
+            <a href="{% url 'admin_users' %}" class="block px-6 py-2 hover:bg-gray-800">Users</a>
+            <a href="{% url 'admin_attendance' %}" class="block px-6 py-2 hover:bg-gray-800">Attendance</a>
+            <a href="{% url 'admin_leave_management' %}" class="block px-6 py-2 hover:bg-gray-800">Leave Management</a>
+            <a href="{% url 'admin_settings' %}" class="block px-6 py-2 hover:bg-gray-800">Settings</a>
+        </nav>
+        <div class="px-6 py-4">
+            <a href="{% url 'admin_logout' %}" class="block text-gray-400 hover:text-white">Logout</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 overflow-x-hidden overflow-y-auto">
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+                <h1 class="text-2xl font-semibold text-gray-900">Dashboard Overview</h1>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                <!-- Total Users Card -->
+                <div class="bg-white overflow-hidden shadow-lg rounded-lg transition-transform duration-300 hover:scale-105">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
+                                <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Users</dt>
+                                    <dd class="text-lg font-semibold text-gray-900">{{ total_users }}</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Attendance Card -->
+                <div class="bg-white overflow-hidden shadow-lg rounded-lg transition-transform duration-300 hover:scale-105">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
+                                <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Today's Attendance</dt>
+                                    <dd class="text-lg font-semibold text-gray-900">{{ today_attendance }}</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Sessions Card -->
+                <div class="bg-white overflow-hidden shadow-lg rounded-lg transition-transform duration-300 hover:scale-105">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
+                                <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Active Sessions</dt>
+                                    <dd class="text-lg font-semibold text-gray-900">{{ active_sessions }}</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending Leaves Card -->
+                <div class="bg-white overflow-hidden shadow-lg rounded-lg transition-transform duration-300 hover:scale-105">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-red-500 rounded-md p-3">
+                                <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Pending Leaves</dt>
+                                    <dd class="text-lg font-semibold text-gray-900">{{ pending_leaves }}</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <!-- Attendance Trends Chart -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-4">
+                        <h3 class="text-base leading-6 font-medium text-gray-900 mb-2">Attendance Trends</h3>
+                        <div class="h-64">
+                            <canvas id="attendanceChart"></canvas>
+                        </div>
+                        <div id="attendanceDetails" class="mt-4 hidden">
+                            <div class="border-t pt-4">
+                                <h4 class="text-sm font-semibold text-gray-700 mb-2">Detailed Records</h4>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Name</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Enrollment</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Department</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Time</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Status</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="attendanceTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Distribution Chart -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-4">
+                        <h3 class="text-base leading-6 font-medium text-gray-900 mb-2">User Distribution</h3>
+                        <div class="h-64">
+                            <canvas id="userDistributionChart"></canvas>
+                        </div>
+                        <div id="userDetails" class="mt-4 hidden">
+                            <div class="border-t pt-4">
+                                <h4 class="text-sm font-semibold text-gray-700 mb-2">User List</h4>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Name</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Enrollment</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Department</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Email</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Last Login</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Status</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="userTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leave Distribution Chart -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-4">
+                        <h3 class="text-base leading-6 font-medium text-gray-900 mb-2">Leave Distribution</h3>
+                        <div class="h-64">
+                            <canvas id="leaveDistributionChart"></canvas>
+                        </div>
+                        <div id="leaveDetails" class="mt-4 hidden">
+                            <div class="border-t pt-4">
+                                <h4 class="text-sm font-semibold text-gray-700 mb-2">Leave Requests</h4>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Name</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Enrollment</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Department</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Leave Type</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Duration</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Reason</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Status</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="leaveTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hourly Attendance Chart -->
+                <div class="bg-white overflow-hidden shadow rounded-lg cursor-pointer hover:shadow-lg transition-shadow">
+                    <div class="p-4">
+                        <h3 class="text-base leading-6 font-medium text-gray-900 mb-2">Hourly Check-in Distribution</h3>
+                        <div class="h-64">
+                            <canvas id="hourlyAttendanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Department-wise Attendance Chart -->
+                <div class="bg-white overflow-hidden shadow rounded-lg cursor-pointer hover:shadow-lg transition-shadow">
+                    <div class="p-4">
+                        <h3 class="text-base leading-6 font-medium text-gray-900 mb-2">Department-wise Attendance</h3>
+                        <div class="h-64">
+                            <canvas id="deptAttendanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weekly Leave Trends Chart -->
+                <div class="bg-white overflow-hidden shadow rounded-lg cursor-pointer hover:shadow-lg transition-shadow">
+                    <div class="p-4">
+                        <h3 class="text-base leading-6 font-medium text-gray-900 mb-2">Weekly Leave Trends</h3>
+                        <div class="h-64">
+                            <canvas id="weeklyLeaveChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Department Stats and Recent Activities -->
+            <div class="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <!-- Department Stats -->
+                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+                    <div class="p-5">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Department Statistics</h3>
+                        <div class="space-y-4">
+                            {% for dept in department_stats %}
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">{{ dept.department }}</span>
+                                <span class="text-sm font-semibold">{{ dept.count }} students</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-500 department-progress" data-percentage="{{ dept.percentage }}"></div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activities -->
+                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+                    <div class="p-5">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Recent Activities</h3>
+                        <div class="space-y-4">
+                            {% for activity in recent_activities %}
+                            <div class="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <div class="flex-shrink-0">
+                                    {% if activity.notification_type == 'attendance' %}
+                                    <div class="bg-blue-100 rounded-full p-2">
+                                        <svg class="h-5 w-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                        </svg>
+                                    </div>
+                                    {% elif activity.notification_type == 'leave' %}
+                                    <div class="bg-green-100 rounded-full p-2">
+                                        <svg class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                    </div>
+                                    {% else %}
+                                    <div class="bg-gray-100 rounded-full p-2">
+                                        <svg class="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-medium text-gray-900">{{ activity.title }}</p>
+                                    <p class="text-sm text-gray-500">{{ activity.message }}</p>
+                                    <p class="text-xs text-gray-400 mt-1">{{ activity.created_at|timesince }} ago</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Modal for detailed information -->
+<div id="detailModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 lg:w-3/4 shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center pb-3">
+            <h3 class="text-xl font-semibold text-gray-900" id="modalTitle">Details</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-500">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div class="mt-4">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200" id="detailTable">
+                    <thead class="bg-gray-50">
+                        <tr id="tableHeader"></tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Common chart options with click handlers
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 12,
+                        padding: 10,
+                        font: {
+                            size: 11
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        font: {
+                            size: 10
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        font: {
+                            size: 10
+                        }
+                    }
+                }
+            },
+            onClick: function(event, elements) {
+                if (elements.length > 0) {
+                    const clickedIndex = elements[0].index;
+                    updateDetailTable(this.id, clickedIndex);
+                }
+            }
+        };
+
+        // Attendance Trends Chart
+        const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+        new Chart(attendanceCtx, {
+            type: 'line',
+            data: {
+                labels: JSON.parse('{{ attendance_dates|escapejs }}'),
+                datasets: [{
+                    label: 'On Time',
+                    data: JSON.parse('{{ on_time_counts|escapejs }}'),
+                    borderColor: 'rgb(34, 197, 94)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    tension: 0.1
+                }, {
+                    label: 'Late',
+                    data: JSON.parse('{{ late_counts|escapejs }}'),
+                    borderColor: 'rgb(234, 179, 8)',
+                    backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                ...commonOptions,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+
+        // User Distribution Chart
+        const userDistCtx = document.getElementById('userDistributionChart').getContext('2d');
+        new Chart(userDistCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Active Users', 'Inactive Users', 'New Users'],
+                datasets: [{
+                    data: JSON.parse('{{ user_distribution|escapejs }}'),
+                    backgroundColor: [
+                        'rgb(34, 197, 94)',
+                        'rgb(239, 68, 68)',
+                        'rgb(59, 130, 246)'
+                    ]
+                }]
+            },
+            options: {
+                ...commonOptions,
+                cutout: '60%'
+            }
+        });
+
+        // Leave Distribution Chart
+        const leaveCtx = document.getElementById('leaveDistributionChart').getContext('2d');
+        const leaveTypes = JSON.parse('{{ leave_types|escapejs }}');
+        const leaveCounts = JSON.parse('{{ leave_counts|escapejs }}');
+        
+        new Chart(leaveCtx, {
+            type: 'bar',
+            data: {
+                labels: leaveTypes,
+                datasets: [{
+                    label: 'Approved',
+                    data: leaveCounts.map(count => count.approved),
+                    backgroundColor: 'rgb(34, 197, 94)'
+                }, {
+                    label: 'Pending',
+                    data: leaveCounts.map(count => count.pending),
+                    backgroundColor: 'rgb(234, 179, 8)'
+                }, {
+                    label: 'Rejected',
+                    data: leaveCounts.map(count => count.rejected),
+                    backgroundColor: 'rgb(239, 68, 68)'
+                }]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    x: {
+                        stacked: true,
+                        ticks: {
+                            font: {
+                                size: 10
+                            }
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        ticks: {
+                            font: {
+                                size: 10
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Hourly Attendance Chart
+        const hourlyCtx = document.getElementById('hourlyAttendanceChart').getContext('2d');
+        new Chart(hourlyCtx, {
+            type: 'bar',
+            data: {
+                labels: JSON.parse('{{ hourly_labels|escapejs }}'),
+                datasets: [{
+                    label: 'Check-ins',
+                    data: JSON.parse('{{ hourly_counts|escapejs }}'),
+                    backgroundColor: 'rgb(59, 130, 246)'
+                }]
+            },
+            options: commonOptions
+        });
+
+        // Department-wise Attendance Chart
+        const deptAttendanceCtx = document.getElementById('deptAttendanceChart').getContext('2d');
+        new Chart(deptAttendanceCtx, {
+            type: 'bar',
+            data: {
+                labels: JSON.parse('{{ dept_attendance_labels|escapejs }}'),
+                datasets: [{
+                    label: 'Attendance Rate (%)',
+                    data: JSON.parse('{{ dept_attendance_data|escapejs }}'),
+                    backgroundColor: 'rgb(147, 51, 234)',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            },
+                            font: {
+                                size: 10
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: {
+                                size: 10
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Weekly Leave Trends Chart
+        const weeklyLeaveCtx = document.getElementById('weeklyLeaveChart').getContext('2d');
+        new Chart(weeklyLeaveCtx, {
+            type: 'line',
+            data: {
+                labels: JSON.parse('{{ weekly_leave_dates|escapejs }}'),
+                datasets: [{
+                    label: 'Approved',
+                    data: JSON.parse('{{ weekly_leave_approved|escapejs }}'),
+                    borderColor: 'rgb(34, 197, 94)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    tension: 0.1
+                }, {
+                    label: 'Pending',
+                    data: JSON.parse('{{ weekly_leave_pending|escapejs }}'),
+                    borderColor: 'rgb(234, 179, 8)',
+                    backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                    tension: 0.1
+                }, {
+                    label: 'Rejected',
+                    data: JSON.parse('{{ weekly_leave_rejected|escapejs }}'),
+                    borderColor: 'rgb(239, 68, 68)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                ...commonOptions,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+
+        // Initialize department progress bars
+        document.querySelectorAll('.department-progress').forEach(bar => {
+            const percentage = bar.dataset.percentage;
+            bar.style.width = `${percentage}%`;
+        });
+
+        // Function to update detail tables
+        function updateDetailTable(chartId, index) {
+            // Hide all detail sections first
+            document.querySelectorAll('[id$="Details"]').forEach(el => el.classList.add('hidden'));
+            
+            let tableBody;
+            let detailSection;
+            
+            switch(chartId) {
+                case 'attendanceChart':
+                    const date = JSON.parse('{{ attendance_dates|escapejs }}')[index];
+                    const records = detailedAttendance[date] || [];
+                    tableBody = document.getElementById('attendanceTableBody');
+                    detailSection = document.getElementById('attendanceDetails');
+                    
+                    tableBody.innerHTML = records.map(record => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-3 py-2 text-sm text-gray-900">${record.user__first_name} ${record.user__last_name}</td>
+                            <td class="px-3 py-2 text-sm text-gray-900">${record.user__profile__enrollment_number}</td>
+                            <td class="px-3 py-2 text-sm text-gray-900">${new Date(record.check_in_time).toLocaleTimeString()}</td>
+                            <td class="px-3 py-2 text-sm">
+                                <span class="px-2 py-1 text-xs rounded-full ${record.status === 'on_time' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                    ${record.status === 'on_time' ? 'On Time' : 'Late'}
+                                </span>
+                            </td>
+                        </tr>
+                    `).join('');
+                    break;
+
+                case 'userDistributionChart':
+                    const types = ['Active', 'Inactive', 'New'];
+                    const type = types[index].toLowerCase();
+                    const users = detailedUsers[type] || [];
+                    tableBody = document.getElementById('userTableBody');
+                    detailSection = document.getElementById('userDetails');
+                    
+                    tableBody.innerHTML = users.map(user => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-3 py-2 text-sm text-gray-900">${user.first_name} ${user.last_name}</td>
+                            <td class="px-3 py-2 text-sm text-gray-900">${user.profile__department}</td>
+                            <td class="px-3 py-2 text-sm">
+                                <span class="px-2 py-1 text-xs rounded-full ${type === 'active' ? 'bg-green-100 text-green-800' : type === 'inactive' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}">
+                                    ${type.charAt(0).toUpperCase() + type.slice(1)}
+                                </span>
+                            </td>
+                        </tr>
+                    `).join('');
+                    break;
+
+                case 'leaveDistributionChart':
+                    const leaveTypes = JSON.parse('{{ leave_types|escapejs }}');
+                    const leaveType = leaveTypes[index];
+                    const leaves = detailedLeaves[leaveType] || [];
+                    tableBody = document.getElementById('leaveTableBody');
+                    detailSection = document.getElementById('leaveDetails');
+                    
+                    tableBody.innerHTML = leaves.map(leave => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-3 py-2 text-sm text-gray-900">${leave.user__first_name} ${leave.user__last_name}</td>
+                            <td class="px-3 py-2 text-sm text-gray-900">${leave.leave_type}</td>
+                            <td class="px-3 py-2 text-sm">
+                                <span class="px-2 py-1 text-xs rounded-full ${
+                                    leave.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                    leave.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-red-100 text-red-800'
+                                }">
+                                    ${leave.status.charAt(0).toUpperCase() + leave.status.slice(1)}
+                                </span>
+                            </td>
+                        </tr>
+                    `).join('');
+                    break;
+
+                // Add cases for other charts...
+            }
+
+            if (detailSection) {
+                detailSection.classList.remove('hidden');
+            }
+        }
+
+        // Function to show modal
+        function showModal(title, headers, data) {
+            document.getElementById('modalTitle').textContent = title;
+            
+            // Set up table headers
+            const headerRow = document.getElementById('tableHeader');
+            headerRow.innerHTML = headers.map(h => `<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${h}</th>`).join('');
+            
+            // Set up table body
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = data.map(row => `
+                <tr class="hover:bg-gray-50">
+                    ${row.map(cell => `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${cell}</td>`).join('')}
+                </tr>
+            `).join('');
+            
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        // Function to close modal
+        function closeModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+    });
+</script>
+{% endblock %} 
